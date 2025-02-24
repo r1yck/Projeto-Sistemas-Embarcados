@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
 import { verificarArduino, fetchDados, calcularConsumo } from "./components/Medicao";
-import styles from "./styles.module.css";
+import { Line } from "react-chartjs-2";
+import "chart.js/auto";
+import "./App.css";
 
 function App() {
   const [dados, setDados] = useState(null);
   const [arduinoConectado, setArduinoConectado] = useState(null);
   const [consumo, setConsumo] = useState(null);
+  const [tempo, setTempo] = useState(0);
+  const [medindo, setMedindo] = useState(false);
+  const [historicoPotencia, setHistoricoPotencia] = useState([{ tempo: 0, potencia: 0 }]);
 
   useEffect(() => {
     const checkArduino = async () => {
@@ -17,6 +22,12 @@ function App() {
       if (arduinoConectado) {
         const novosDados = await fetchDados();
         setDados(novosDados);
+        if (novosDados.potencia) {
+          setHistoricoPotencia((prev) => [
+            ...prev,
+            { tempo, potencia: novosDados.potencia },
+          ]);
+        }
       }
     };
 
@@ -30,35 +41,78 @@ function App() {
     }
 
     return () => clearInterval(intervalArduino);
-  }, [arduinoConectado]);
+  }, [arduinoConectado, tempo]);
+
+  useEffect(() => {
+    let interval;
+    if (medindo) {
+      interval = setInterval(() => {
+        setTempo((prev) => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [medindo]);
 
   const handleCalcularConsumo = () => {
     if (dados && dados.potencia) {
-      const resultado = calcularConsumo(dados.potencia, 1); // Considerando 1h de uso
+      const resultado = calcularConsumo(dados.potencia, tempo / 3600);
       setConsumo(resultado);
     }
   };
 
-  return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Contador Elétrico</h1>
+  const iniciarMedicao = () => {
+    setMedindo(true);
+    setTempo(0);
+    setHistoricoPotencia([{ tempo: 0, potencia: 0 }]);
+  };
 
-      <div className={styles.box}>
-        <p><strong>Corrente:</strong> 5.0 A</p> {/* Campo fixo */}
+  const pararMedicao = () => {
+    setMedindo(false);
+    handleCalcularConsumo();
+  };
+
+  const data = {
+    labels: historicoPotencia.map((d) => d.tempo),
+    datasets: [
+      {
+        label: "Potência (W)",
+        data: historicoPotencia.map((d) => d.potencia),
+        borderColor: "#61dafb",
+        backgroundColor: "rgba(97, 218, 251, 0.2)",
+        fill: true,
+      },
+    ],
+  };
+
+  return (
+    <div className="container">
+      <h1 className="title">Medidor de Consumo</h1>
+      <div className="display-bcd">{tempo}</div>
+      <div className="box">
+        <p><strong>Volts:</strong> 220V</p>
+        <p><strong>Corrente:</strong> {dados?.corrente?.toFixed(2) || "--"} A</p>
+        <p><strong>Potência:</strong> {dados?.potencia?.toFixed(2) || "--"} W</p>
+        <p><strong>Tempo de Medição:</strong> {tempo} s</p>
 
         {!arduinoConectado && (
-          <p className={styles.alert}>⚠ Conecte o Arduino para ver os dados!</p>
+          <p className="alert">⚠ Conecte o Arduino para ver os dados!</p>
         )}
 
-        {arduinoConectado && dados && (
-          <>
-            <p><strong>Tensão:</strong> {dados.tensao?.toFixed(2) || 0} V</p>
-            <p><strong>Potência:</strong> {dados.potencia?.toFixed(2) || 0} W</p>
+        <div className="chart-container" style={{ width: "100%", height: "400px" }}>
+          <Line data={data} />
+        </div>
 
-            {/* O botão só aparece se o Arduino estiver conectado */}
-            {arduinoConectado && (
-              <button className={styles.button} onClick={handleCalcularConsumo}>
-                Calcular Consumo
+        {arduinoConectado && (
+          <>
+            {!medindo ? (
+              <button className="button" onClick={iniciarMedicao}>
+                Iniciar Medição
+              </button>
+            ) : (
+              <button className="button" onClick={pararMedicao}>
+                Parar Medição
               </button>
             )}
 

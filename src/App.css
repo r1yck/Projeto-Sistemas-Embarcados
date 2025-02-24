@@ -1,38 +1,104 @@
-.App {
+body {
+  font-family: Arial, sans-serif;
+  background-color: #121212;
+  color: white;
   text-align: center;
+  margin: 0;
+  padding: 0;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
 }
 
-.App-link {
+.title {
   color: #61dafb;
+  font-size: 28px;
+  margin-bottom: 20px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.dashboard {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.box {
+  padding: 20px;
+  background-color: #282c34;
+  border-radius: 8px;
+  flex: 1;
+  min-width: 280px;
+  max-width: 400px;
+  text-align: left;
+}
+
+.alert {
+  color: red;
+}
+
+.button {
+  background-color: #61dafb;
+  color: black;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.button:hover {
+  background-color: #4fa3d1;
+}
+
+.chart-container {
+  margin-top: 20px;
+  background: white;
+  padding: 10px;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 95%; 
+  height: 400px; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.display-bcd {
+  font-size: 40px;
+  font-weight: bold;
+  background: black;
+  color: red;
+  padding: 10px;
+  display: inline-block;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 600px) {
+  .chart-container {
+    max-width: 100%;
+    height: 300px; /* Menor altura para telas menores */
   }
-  to {
-    transform: rotate(360deg);
+
+  .box {
+    min-width: 250px;
+    max-width: 100%;
+  }
+
+  .container {
+    padding: 10px;
   }
 }
