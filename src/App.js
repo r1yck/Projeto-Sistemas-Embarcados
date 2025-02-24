@@ -10,7 +10,7 @@ function App() {
   const [consumo, setConsumo] = useState(null);
   const [tempo, setTempo] = useState(0);
   const [medindo, setMedindo] = useState(false);
-  const [historicoPotencia, setHistoricoPotencia] = useState([{ tempo: 0, potencia: 0 }]);
+  const [historicoPotencia, setHistoricoPotencia] = useState([]);
 
   useEffect(() => {
     const checkArduino = async () => {
@@ -18,29 +18,31 @@ function App() {
       setArduinoConectado(conectado);
     };
 
+    checkArduino();
+    const intervalArduino = setInterval(checkArduino, 5000);
+    return () => clearInterval(intervalArduino);
+  }, []);
+
+  useEffect(() => {
     const updateDados = async () => {
       if (arduinoConectado) {
         const novosDados = await fetchDados();
         setDados(novosDados);
-        if (novosDados.potencia) {
+        if (novosDados?.potencia) {
           setHistoricoPotencia((prev) => [
-            ...prev,
+            ...prev.slice(-50), // Mantém apenas os últimos 50 pontos
             { tempo, potencia: novosDados.potencia },
           ]);
         }
+      } else {
+        // Simulação de dados quando Arduino não está conectado
+        const simulados = { corrente: 5, potencia: 1100 };
+        setDados(simulados);
       }
     };
 
-    checkArduino();
-    const intervalArduino = setInterval(checkArduino, 5000);
-
-    if (arduinoConectado) {
-      updateDados();
-      const intervalDados = setInterval(updateDados, 2000);
-      return () => clearInterval(intervalDados);
-    }
-
-    return () => clearInterval(intervalArduino);
+    const intervalDados = setInterval(updateDados, 2000);
+    return () => clearInterval(intervalDados);
   }, [arduinoConectado, tempo]);
 
   useEffect(() => {
@@ -65,7 +67,7 @@ function App() {
   const iniciarMedicao = () => {
     setMedindo(true);
     setTempo(0);
-    setHistoricoPotencia([{ tempo: 0, potencia: 0 }]);
+    setHistoricoPotencia([]);
   };
 
   const pararMedicao = () => {
@@ -97,7 +99,7 @@ function App() {
         <p><strong>Tempo de Medição:</strong> {tempo} s</p>
 
         {!arduinoConectado && (
-          <p className="alert">⚠ Conecte o Arduino para ver os dados!</p>
+          <p className="alert">⚠ Conecte o Arduino para ver os dados reais!</p>
         )}
 
         <div className="chart-container" style={{ width: "100%", height: "400px" }}>
