@@ -3,6 +3,8 @@ import { verificarArduino, fetchDados, calcularConsumo } from "./components/Medi
 import { Line } from "react-chartjs-2";
 import "chart.js/auto";
 import "./App.css";
+import logo from "./assets/logo.png";
+import superChoque from "./assets/superchoque.png";
 
 function App() {
   const [dados, setDados] = useState(null);
@@ -17,7 +19,6 @@ function App() {
       const conectado = await verificarArduino();
       setArduinoConectado(conectado);
     };
-
     checkArduino();
     const intervalArduino = setInterval(checkArduino, 5000);
     return () => clearInterval(intervalArduino);
@@ -28,19 +29,12 @@ function App() {
       if (arduinoConectado) {
         const novosDados = await fetchDados();
         setDados(novosDados);
-        if (novosDados?.potencia) {
-          setHistoricoPotencia((prev) => [
-            ...prev.slice(-50), // Mantém apenas os últimos 50 pontos
-            { tempo, potencia: novosDados.potencia },
-          ]);
+        if (novosDados?.corrente) {
+          const potenciaCalculada = 220 * novosDados.corrente;
+          setHistoricoPotencia((prev) => [...prev.slice(-50), { tempo, potencia: potenciaCalculada }]);
         }
-      } else {
-        // Simulação de dados quando Arduino não está conectado
-        const simulados = { corrente: 5, potencia: 1100 };
-        setDados(simulados);
       }
     };
-
     const intervalDados = setInterval(updateDados, 2000);
     return () => clearInterval(intervalDados);
   }, [arduinoConectado, tempo]);
@@ -58,74 +52,110 @@ function App() {
   }, [medindo]);
 
   const handleCalcularConsumo = () => {
-    if (dados && dados.potencia) {
-      const resultado = calcularConsumo(dados.potencia, tempo / 3600);
+    if (dados && dados.corrente) {
+      const potencia = 220 * dados.corrente;
+      const resultado = calcularConsumo(potencia, tempo / 3600);
       setConsumo(resultado);
     }
   };
 
-  const iniciarMedicao = () => {
-    setMedindo(true);
-    setTempo(0);
-    setHistoricoPotencia([]);
-  };
-
-  const pararMedicao = () => {
-    setMedindo(false);
-    handleCalcularConsumo();
-  };
-
-  const data = {
-    labels: historicoPotencia.map((d) => d.tempo),
-    datasets: [
-      {
-        label: "Potência (W)",
-        data: historicoPotencia.map((d) => d.potencia),
-        borderColor: "#61dafb",
-        backgroundColor: "rgba(97, 218, 251, 0.2)",
-        fill: true,
-      },
-    ],
-  };
-
   return (
-    <div className="container">
-      <h1 className="title">Medidor de Consumo</h1>
-      <div className="display-bcd">{tempo}</div>
-      <div className="box">
-        <p><strong>Volts:</strong> 220V</p>
-        <p><strong>Corrente:</strong> {dados?.corrente?.toFixed(2) || "--"} A</p>
-        <p><strong>Potência:</strong> {dados?.potencia?.toFixed(2) || "--"} W</p>
-        <p><strong>Tempo de Medição:</strong> {tempo} s</p>
+    <div className="app-container">
+      <header className="header">
+        <img src={logo} alt="Logo" className="logo" />
+        <h1 className="title">WattsUP - Medidor de Consumo</h1>
+        <img src={superChoque} alt="Super Choque" className="super-choque" />
+      </header>
 
-        {!arduinoConectado && (
-          <p className="alert">⚠ Conecte o Arduino para ver os dados reais!</p>
-        )}
-
-        <div className="chart-container" style={{ width: "100%", height: "400px" }}>
-          <Line data={data} />
+      <div className="content">
+        <div className="left-panel">
+          <div className="display-bcd">{dados?.corrente ? (220 * dados.corrente).toFixed(2) : "--"} W</div>
+          <div className="display-cronometro">{tempo}</div>
+          <div className="chart-container" style={{ backgroundColor: 'black', padding: '20px', borderRadius: '10px' }}>
+            <Line
+              data={{
+                labels: historicoPotencia.map((d) => d.tempo),
+                datasets: [{
+                  label: "Potência (W)",
+                  data: historicoPotencia.map((d) => d.potencia),
+                  borderColor: "white",
+                  backgroundColor: "rgba(255, 255, 255, 0.2)",
+                  fill: true,
+                }],
+              }}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    labels: {
+                      color: 'white',
+                    },
+                  },
+                  tooltip: {
+                    bodyColor: 'white',
+                    backgroundColor: 'black',
+                    titleColor: 'white',
+                  },
+                },
+                scales: {
+                  x: {
+                    ticks: {
+                      color: 'white',
+                    },
+                    grid: {
+                      color: 'gray',
+                    },
+                  },
+                  y: {
+                    ticks: {
+                      color: 'white',
+                    },
+                    grid: {
+                      color: 'gray',
+                    },
+                  },
+                },
+                elements: {
+                  line: {
+                    borderColor: 'white',
+                  },
+                  point: {
+                    borderColor: 'white',
+                    backgroundColor: 'white',
+                  },
+                },
+              }}
+            />
+          </div>
         </div>
 
-        {arduinoConectado && (
-          <>
-            {!medindo ? (
-              <button className="button" onClick={iniciarMedicao}>
-                Iniciar Medição
-              </button>
-            ) : (
-              <button className="button" onClick={pararMedicao}>
-                Parar Medição
-              </button>
-            )}
-
-            {consumo && (
+        <div className="right-panel">
+          <div className={`box ${dados ? 'visible' : ''}`}>
+            <p><strong>Volts:</strong> 220V</p>
+            <p><strong>Corrente:</strong> {dados?.corrente?.toFixed(2) || "--"} A</p>
+            <p><strong>Potência:</strong> {dados?.corrente ? (220 * dados.corrente).toFixed(2) : "--"} W</p>
+            <p><strong>Tempo de Medição:</strong> {tempo} s</p>
+            {!arduinoConectado && <p className="alert">⚠ Conecte o Arduino para ver os dados reais!</p>}
+            {arduinoConectado && (
               <>
-                <p><strong>Consumo:</strong> {consumo.consumo} kWh</p>
-                <p><strong>Valor:</strong> R$ {consumo.valor}</p>
+                {!medindo ? (
+                  <button className="button" onClick={() => setMedindo(true)}>Iniciar Medição</button>
+                ) : (
+                  <button className="button" onClick={() => {
+                    setMedindo(false);
+                    handleCalcularConsumo();
+                  }}>Parar Medição</button>
+                )}
+                {consumo && (
+                  <>
+                    <p><strong>Consumo:</strong> {consumo.consumo} kWh</p>
+                    <p><strong>Valor:</strong> R$ {consumo.valor}</p>
+                  </>
+                )}
               </>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );

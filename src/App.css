@@ -1,78 +1,82 @@
-body {
-  font-family: Arial, sans-serif;
-  background-color: #121212;
-  color: white;
-  text-align: center;
-  margin: 0;
-  padding: 0;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Roboto:wght@400;500&family=Digital-7+Mono&display=swap');
+@font-face {
+  font-family: '7Segment';
+  src: url('assets/fonts/7segment.ttf') format('truetype');
 }
 
-.container {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 20px;
-  background-color: #1e1e1e;
-  border-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.1);
+.header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
+  width: 100%;
+  padding: 10px 15px;
+  background-color: #454e5f;
+  box-sizing: border-box;
+}
+
+.logo, .super-choque {
+  height: 120px;
+  width: auto;
 }
 
 .title {
-  color: #61dafb;
-  font-size: 28px;
-  margin-bottom: 20px;
+  font-family: 'Poppins', sans-serif;
+  color: #e0e0e0;
+  font-size: 24px;
+  margin: 0;
+  text-align: center;
+  flex-grow: 1;
 }
 
-.dashboard {
+.content {
   display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  padding: 20px;
+  background-color: #21252c;
+  background-image: url('assets/background.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.left-panel, .right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.left-panel {
+  align-items: center;
+}
+
+.right-panel {
+  align-items: flex-start;
+  min-width: 300px;
 }
 
 .box {
+  margin-left: 150px;
   padding: 20px;
-  background-color: #282c34;
-  border-radius: 8px;
-  flex: 1;
-  min-width: 280px;
-  max-width: 400px;
+  border-radius: 12px;
   text-align: left;
+  background: black;
+  color: white;
+  border: 3px solid #454e5f;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, opacity 0.5s ease, box-shadow 0.3s ease;
 }
 
-.alert {
-  color: red;
+.box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
 }
 
-.button {
-  background-color: #61dafb;
-  color: black;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  margin-top: 10px;
+.box p {
+  opacity: 0;
+  transition: opacity 0.5s ease;
 }
 
-.button:hover {
-  background-color: #4fa3d1;
-}
-
-.chart-container {
-  margin-top: 20px;
-  background: white;
-  padding: 10px;
-  border-radius: 10px;
-  width: 100%;
-  max-width: 95%; 
-  height: 400px; 
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.box.visible p {
+  opacity: 1;
 }
 
 .display-bcd {
@@ -84,13 +88,88 @@ body {
   display: inline-block;
   border-radius: 5px;
   margin-bottom: 20px;
+  font-family: '7Segment', sans-serif;
+  border: 3px solid #454e5f;
 }
 
-/* Responsividade para telas menores */
+.display-cronometro {
+  font-size: 36px;
+  font-weight: bold;
+  background: black;
+  color: #00ff00;
+  padding: 10px 20px;
+  display: inline-block;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  font-family: '7segment', sans-serif;
+  border: 3px solid #454e5f;
+}
+
+.chart-container {
+  margin-top: 20px;
+  background: black;
+  padding: 10px;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 80%;
+  height: 350px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 3px solid #454e5f;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.chart-container:hover {
+  transform: scale(1.05); /* Leve aumento */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); /* Sombra mais forte */
+}
+
+.chart-container .chart {
+  color: white;
+}
+
+.alert {
+  color: red;
+  opacity: 0;
+  animation: fadeIn 1s forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.button {
+  background-color: #454e5f;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: #21252c;
+  transform: translateY(-3px); /* Efeito de elevação */
+}
+
 @media (max-width: 600px) {
+  .logo, .super-choque {
+    height: 60px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
   .chart-container {
     max-width: 100%;
-    height: 300px; /* Menor altura para telas menores */
+    height: 300px;
   }
 
   .box {
@@ -98,7 +177,11 @@ body {
     max-width: 100%;
   }
 
-  .container {
-    padding: 10px;
+  .content {
+    flex-direction: column;
+  }
+
+  .header {
+    padding: 10px 10px;
   }
 }
