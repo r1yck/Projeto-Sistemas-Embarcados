@@ -22,12 +22,14 @@ export async function fetchDados() {
   }
 }
 
-// Função para calcular o consumo e o valor em R$
-export function calcularConsumo(potencia, tempo_horas, tarifa_kWh = 0.824) {
-  if (!potencia || potencia <= 0) return { consumo: 0, valor: 0 };
-  
-  const consumo_kWh = (potencia * tempo_horas) / 1000;
-  const valor_R$ = consumo_kWh * tarifa_kWh;
-
-  return { consumo: consumo_kWh.toFixed(6), valor: valor_R$.toFixed(2) };
+export async function calcularConsumo(potencia, tempo_horas) {
+  try {
+    const response = await axios.get("http://localhost:8000/consumo", {
+      params: { potencia, tempo_horas }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao calcular consumo:", error);
+    return { consumo: 0, valor: 0 };
+  }
 }

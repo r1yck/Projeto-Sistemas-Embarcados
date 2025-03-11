@@ -53,6 +53,11 @@
   min-width: 300px;
 }
 
+.valor-minuto {
+  color: yellow;
+  font-weight: bold;
+}
+
 .box {
   margin-left: 150px;
   padding: 20px;

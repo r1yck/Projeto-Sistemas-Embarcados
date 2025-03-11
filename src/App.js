@@ -8,37 +8,54 @@ import superChoque from "./assets/superchoque.png";
 
 function App() {
   const [dados, setDados] = useState(null);
-  const [arduinoConectado, setArduinoConectado] = useState(null);
+  const [arduinoConectado, setArduinoConectado] = useState(false);
   const [consumo, setConsumo] = useState(null);
   const [tempo, setTempo] = useState(0);
   const [medindo, setMedindo] = useState(false);
   const [historicoPotencia, setHistoricoPotencia] = useState([]);
+  const [valorPorMinuto, setValorPorMinuto] = useState(null); // Estado para valor por minuto
 
+  // Verifica a conexão com o Arduino a cada 5 segundos
   useEffect(() => {
     const checkArduino = async () => {
-      const conectado = await verificarArduino();
-      setArduinoConectado(conectado);
+      try {
+        const conectado = await verificarArduino();
+        setArduinoConectado(conectado); // Atualiza diretamente o estado
+      } catch (error) {
+        console.error("Erro ao verificar Arduino:", error);
+      }
     };
+
     checkArduino();
     const intervalArduino = setInterval(checkArduino, 5000);
     return () => clearInterval(intervalArduino);
   }, []);
 
+  // Atualiza os dados do Arduino a cada 2 segundos
   useEffect(() => {
     const updateDados = async () => {
       if (arduinoConectado) {
-        const novosDados = await fetchDados();
-        setDados(novosDados);
-        if (novosDados?.corrente) {
-          const potenciaCalculada = 220 * novosDados.corrente;
-          setHistoricoPotencia((prev) => [...prev.slice(-50), { tempo, potencia: potenciaCalculada }]);
+        try {
+          const novosDados = await fetchDados();
+          if (novosDados && novosDados.corrente) {
+            setDados(novosDados);
+            const potenciaCalculada = 220 * novosDados.corrente;
+            setHistoricoPotencia((prev) => [
+              ...prev.slice(-50), 
+              { tempo, potencia: potenciaCalculada },
+            ]);
+          }
+        } catch (error) {
+          console.error("Erro ao buscar dados:", error);
         }
       }
     };
+
     const intervalDados = setInterval(updateDados, 2000);
     return () => clearInterval(intervalDados);
   }, [arduinoConectado, tempo]);
 
+  // Controla o incremento do tempo durante a medição
   useEffect(() => {
     let interval;
     if (medindo) {
@@ -47,18 +64,42 @@ function App() {
       }, 1000);
     } else {
       clearInterval(interval);
+      setTempo(0); // Reseta o tempo quando a medição é parada
     }
     return () => clearInterval(interval);
   }, [medindo]);
 
-  const handleCalcularConsumo = () => {
-    if (dados && dados.corrente) {
-      const potencia = 220 * dados.corrente;
-      const resultado = calcularConsumo(potencia, tempo / 3600);
+  const handleCalcularConsumo = async () => {
+    if (dados && dados.corrente && tempo > 0) {
+      const potencia = 220 * dados.corrente; // Potência em W
+      const tempoEmHoras = tempo / 3600; // Convertendo tempo de segundos para horas
+      const resultado = await calcularConsumo(potencia, tempoEmHoras);
+  
+      // Verifique o que está sendo retornado
+      console.log("Resultado do cálculo de consumo:", resultado);
+  
       setConsumo(resultado);
+  
+      // Verifique se o valor do consumo e o tempo são válidos antes de calcular o valor por minuto
+      if (resultado && resultado['valor (R$)'] && tempo > 0) {
+        console.log("Valor retornado pelo backend:", resultado['valor (R$)']);
+  
+        // Calcula o valor por minuto
+        const valorPorMinutoCalculado = (resultado['valor (R$)'] / tempo) * 60;
+        console.log("Valor por minuto calculado:", valorPorMinutoCalculado);
+  
+        // Formata o valor para 6 casas decimais
+        const valorPorMinutoFormatado = valorPorMinutoCalculado.toFixed(6);
+        console.log("Valor por minuto formatado:", valorPorMinutoFormatado);
+  
+        setValorPorMinuto(valorPorMinutoFormatado); // Atualiza o estado com o valor formatado
+      } else {
+        setValorPorMinuto("0.000000"); // Se o valor for inválido ou muito pequeno, define como 0.000000
+      }
     }
   };
-
+  
+  
   return (
     <div className="app-container">
       <header className="header">
@@ -149,7 +190,10 @@ function App() {
                 {consumo && (
                   <>
                     <p><strong>Consumo:</strong> {consumo.consumo} kWh</p>
-                    <p><strong>Valor:</strong> R$ {consumo.valor}</p>
+                    <p><strong>Valor:</strong> R$ 0,821/kWh</p>
+                    {valorPorMinuto && (
+                      <p className="valor-minuto"><strong>Esse equipamento gasta:</strong> R$ {valorPorMinuto} por minuto</p>
+                    )}
                   </>
                 )}
               </>
